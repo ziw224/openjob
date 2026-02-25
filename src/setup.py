@@ -5,7 +5,10 @@ Run: openjob setup
 """
 import getpass
 import os
+import shutil
 import sys
+import termios
+import tty
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
@@ -32,9 +35,10 @@ def warn(text):     print(f"  {c('!', YELLOW)} {text}")
 PROVIDERS = [
     {
         "id":       "openai",
-        "label":    "OpenAI",
+        "label":    "OpenAI API",
         "models":   ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
         "default":  "gpt-4o",
+        "auth":     "apikey",
         "key_env":  "OPENAI_API_KEY",
         "key_hint": "sk-...",
         "url":      "https://platform.openai.com/api-keys",
@@ -42,19 +46,41 @@ PROVIDERS = [
     },
     {
         "id":       "anthropic",
-        "label":    "Anthropic",
-        "models":   ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
-        "default":  "claude-3-5-sonnet-20241022",
+        "label":    "Anthropic API",
+        "models":   ["claude-sonnet-4-5", "claude-haiku-4-5", "claude-opus-4"],
+        "default":  "claude-sonnet-4-5",
+        "auth":     "apikey",
         "key_env":  "ANTHROPIC_API_KEY",
         "key_hint": "sk-ant-...",
         "url":      "https://console.anthropic.com/settings/keys",
         "badge":    "",
     },
     {
+        "id":       "claude",
+        "label":    "Claude CLI  (use your existing Claude account)",
+        "models":   ["claude-sonnet-4-5", "claude-opus-4", "claude-haiku-4-5"],
+        "default":  "claude-sonnet-4-5",
+        "auth":     "cli",
+        "bin_env":  "CLAUDE_BIN",
+        "bin_names": ["claude"],
+        "badge":    "no API key — uses claude login",
+    },
+    {
+        "id":       "codex",
+        "label":    "Codex CLI  (use your existing OpenAI account)",
+        "models":   ["o4-mini", "o3", "gpt-4o"],
+        "default":  "o4-mini",
+        "auth":     "cli",
+        "bin_env":  "CODEX_BIN",
+        "bin_names": ["codex"],
+        "badge":    "no API key — uses codex login",
+    },
+    {
         "id":       "gemini",
         "label":    "Google Gemini",
         "models":   ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"],
         "default":  "gemini-1.5-flash",
+        "auth":     "apikey",
         "key_env":  "GEMINI_API_KEY",
         "key_hint": "AIza...",
         "url":      "https://aistudio.google.com/app/apikey",
@@ -65,6 +91,7 @@ PROVIDERS = [
         "label":    "Groq",
         "models":   ["llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"],
         "default":  "llama-3.1-70b-versatile",
+        "auth":     "apikey",
         "key_env":  "GROQ_API_KEY",
         "key_hint": "gsk_...",
         "url":      "https://console.groq.com/keys",
@@ -72,15 +99,76 @@ PROVIDERS = [
     },
     {
         "id":       "ollama",
-        "label":    "Ollama (local)",
+        "label":    "Ollama  (local, no account needed)",
         "models":   ["llama3.1", "mistral", "gemma2", "qwen2.5"],
         "default":  "llama3.1",
-        "key_env":  None,
-        "key_hint": None,
-        "url":      "https://ollama.com",
-        "badge":    "no API key needed",
+        "auth":     "local",
+        "badge":    "runs on your machine",
     },
 ]
+
+# ── Arrow-key interactive selector ────────────────────────────────────────────
+
+def arrow_select(items: list, title: str = "") -> int:
+    """
+    Render a list with a ▶ cursor; use ↑/↓ arrows + Enter to pick.
+    Falls back to numbered input when stdin is not a TTY.
+    Returns 0-based index.
+    """
+    if title:
+        print(f"\n  {c(title, WHITE)}")
+
+    if not sys.stdin.isatty():
+        for i, item in enumerate(items, 1):
+            print(f"  {c(str(i), CYAN)}. {item}")
+        while True:
+            try:
+                raw = input(f"\n  Choice [1-{len(items)}]: ").strip()
+                idx = int(raw) - 1
+                if 0 <= idx < len(items):
+                    return idx
+            except (ValueError, KeyboardInterrupt, EOFError):
+                sys.exit(0)
+        return 0
+
+    selected = 0
+    n = len(items)
+
+    def render(first: bool = False):
+        if not first:
+            sys.stdout.write(f"\033[{n}A")   # move cursor up n lines
+        for i, item in enumerate(items):
+            prefix = f"  {c('▶', CYAN)} " if i == selected else "    "
+            sys.stdout.write(f"\r{prefix}{item}\033[K\n")
+        sys.stdout.flush()
+
+    print()
+    render(first=True)
+
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        while True:
+            ch = sys.stdin.read(1)
+            if ch == "\x1b":
+                seq = sys.stdin.read(2)
+                if seq == "[A":                     # ↑ Up
+                    selected = (selected - 1) % n
+                    render()
+                elif seq == "[B":                   # ↓ Down
+                    selected = (selected + 1) % n
+                    render()
+            elif ch in ("\r", "\n"):               # Enter
+                break
+            elif ch in ("\x03", "\x04"):           # Ctrl-C / Ctrl-D
+                print()
+                sys.exit(0)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+    print()
+    return selected
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -127,22 +215,15 @@ def prompt(text, default="", secret=False) -> str:
     return val or default
 
 
-def choose(items: list, prompt_text: str = "Choice") -> int:
-    """Print numbered list, return 0-based index."""
-    for i, item in enumerate(items, 1):
-        print(f"  {c(str(i), CYAN)}. {item}")
-    while True:
-        try:
-            raw = input(f"\n  {prompt_text} [1-{len(items)}]: ").strip()
-            idx = int(raw) - 1
-            if 0 <= idx < len(items):
-                return idx
-        except (ValueError, KeyboardInterrupt, EOFError):
-            pass
-        print(f"  {c('Please enter a number between 1 and ' + str(len(items)), YELLOW)}")
+def detect_cli_bin(bin_names: list) -> str | None:
+    """Return full path to the first found binary, or None."""
+    for name in bin_names:
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
 
-
-# ── Connection test ───────────────────────────────────────────────────────────
+# ── Connection tests ──────────────────────────────────────────────────────────
 
 def test_openai(api_key: str, model: str, base_url: str | None = None) -> bool:
     import openai
@@ -154,8 +235,7 @@ def test_openai(api_key: str, model: str, base_url: str | None = None) -> bool:
         client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "Say 'ok' in one word."}],
-            max_tokens=5,
-            timeout=15,
+            max_tokens=5, timeout=15,
         )
         return True
     except Exception as e:
@@ -168,8 +248,7 @@ def test_anthropic(api_key: str, model: str) -> bool:
     try:
         client = anthropic.Anthropic(api_key=api_key)
         client.messages.create(
-            model=model,
-            max_tokens=5,
+            model=model, max_tokens=5,
             messages=[{"role": "user", "content": "Say 'ok'."}],
         )
         return True
@@ -177,41 +256,62 @@ def test_anthropic(api_key: str, model: str) -> bool:
         err(f"Connection failed: {e}")
         return False
 
-
 # ── Setup sections ────────────────────────────────────────────────────────────
 
 def setup_llm() -> dict:
-    """Interactive LLM provider + model selection. Returns env var dict."""
     print(f"\n{bold('── LLM Provider ─────────────────────────────────────')}")
-    print(f"  {c('Choose the AI model that will tailor your resumes:', WHITE)}\n")
+    print(f"  {c('Choose how openjob calls AI to tailor your resumes:', WHITE)}")
 
     labels = []
     for p in PROVIDERS:
-        badge = f"  {c('(' + p['badge'] + ')', DIM)}" if p["badge"] else ""
+        badge = f"  {c('(' + p['badge'] + ')', DIM)}" if p.get("badge") else ""
         labels.append(f"{bold(p['label'])}{badge}")
-    idx = choose(labels, "Provider")
+
+    idx = arrow_select(labels, "Provider")
     provider = PROVIDERS[idx]
 
-    print(f"\n  {c('Select model:', WHITE)}")
-    model_idx = choose(provider["models"], "Model")
+    # Model selection
+    print(f"\n{bold('── Model ─────────────────────────────────────────────')}")
+    model_idx = arrow_select(provider["models"], "Model")
     model = provider["models"][model_idx]
 
     env_updates = {
-        "LLM_MODE":    provider["id"],
-        f"OPENAI_MODEL" if provider["id"] == "openai" else f"{provider['id'].upper()}_MODEL": model,
+        "LLM_MODE": provider["id"],
+        f"{provider['id'].upper()}_MODEL": model,
     }
-    # Rename model key correctly
-    env_updates = {"LLM_MODE": provider["id"]}
-    env_updates[f"{provider['id'].upper()}_MODEL"] = model
 
-    if provider["id"] == "ollama":
-        print(f"\n  {c('Make sure Ollama is running: ', WHITE)}{c('ollama serve', DIM)}")
-        ollama_url = prompt("Ollama base URL", "http://localhost:11434")
-        env_updates["OLLAMA_BASE_URL"] = ollama_url
-        ok(f"Ollama configured → {ollama_url}  model: {model}")
+    auth = provider.get("auth", "apikey")
+
+    # ── CLI-based auth (Claude CLI / Codex) ──────────────────────────────────
+    if auth == "cli":
+        bin_env  = provider["bin_env"]
+        existing = read_env().get(bin_env, "")
+        detected = detect_cli_bin(provider["bin_names"])
+
+        if detected:
+            ok(f"Found {provider['bin_names'][0]} at {c(detected, CYAN)}")
+            use_detected = prompt(f"Use this path?", "Y/n").lower()
+            bin_path = detected if use_detected in ("", "y", "yes") else prompt(f"Full path to {provider['bin_names'][0]}", existing)
+        else:
+            warn(f"{provider['bin_names'][0]} not found in PATH.")
+            info(f"Make sure it's installed and in your PATH, then enter its location:")
+            bin_path = prompt(f"Full path to {provider['bin_names'][0]}", existing or "")
+
+        if bin_path:
+            env_updates[bin_env] = bin_path
+            ok(f"Set {bin_env}={bin_path}  model: {c(model, CYAN)}")
+        else:
+            warn(f"No path set — you can add {bin_env} to .env manually later.")
         return env_updates
 
-    # API key entry
+    # ── Local (Ollama) ───────────────────────────────────────────────────────
+    if auth == "local":
+        ollama_url = prompt("Ollama base URL", "http://localhost:11434")
+        env_updates["OLLAMA_BASE_URL"] = ollama_url
+        ok(f"Ollama → {ollama_url}  model: {model}")
+        return env_updates
+
+    # ── API key auth ─────────────────────────────────────────────────────────
     print(f"\n  Get your API key: {c(provider['url'], CYAN)}")
     api_key = prompt(f"{provider['label']} API key", secret=True)
     if not api_key:
@@ -220,16 +320,14 @@ def setup_llm() -> dict:
 
     env_updates[provider["key_env"]] = api_key
 
-    # Test connection
     print(f"\n  {c('Testing connection…', DIM)}", end="", flush=True)
     success = False
-
     if provider["id"] == "anthropic":
         success = test_anthropic(api_key, model)
     elif provider["id"] == "gemini":
-        success = test_openai(api_key, model, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        success = test_openai(api_key, model, "https://generativelanguage.googleapis.com/v1beta/openai/")
     elif provider["id"] == "groq":
-        success = test_openai(api_key, model, base_url="https://api.groq.com/openai/v1")
+        success = test_openai(api_key, model, "https://api.groq.com/openai/v1")
     else:
         success = test_openai(api_key, model)
 
@@ -242,20 +340,18 @@ def setup_llm() -> dict:
 
 
 def setup_candidate() -> dict:
-    """Collect candidate info. Returns env var dict."""
     print(f"\n{bold('── Candidate Info ────────────────────────────────────')}")
     print(f"  {c('This info appears in your cover letters and resumes.', DIM)}\n")
     existing = read_env()
     return {
-        "CANDIDATE_NAME": prompt("Your full name",    existing.get("CANDIDATE_NAME", "")),
-        "EMAIL":          prompt("Email address",     existing.get("EMAIL", "")),
-        "LINKEDIN":       prompt("LinkedIn URL",      existing.get("LINKEDIN", "linkedin.com/in/yourusername")),
+        "CANDIDATE_NAME": prompt("Your full name",      existing.get("CANDIDATE_NAME", "")),
+        "EMAIL":          prompt("Email address",       existing.get("EMAIL", "")),
+        "LINKEDIN":       prompt("LinkedIn URL",        existing.get("LINKEDIN", "linkedin.com/in/yourusername")),
         "PORTFOLIO":      prompt("Portfolio / website", existing.get("PORTFOLIO", "")),
     }
 
 
 def setup_resume_reminder():
-    """Remind user to update their resume HTML files."""
     print(f"\n{bold('── Resume Templates ──────────────────────────────────')}")
     print(f"  Replace the placeholder content with your actual resume:\n")
     info(f"AI / ML roles   → {c('resume/base_resume_ai.html', CYAN)}")
@@ -264,7 +360,6 @@ def setup_resume_reminder():
 
 
 def setup_discord():
-    """Optional Discord webhook setup."""
     print(f"\n{bold('── Discord Notifications (optional) ─────────────────')}")
     want = prompt("Set up Discord notifications? [y/N]", "n").lower()
     if want != "y":
@@ -281,29 +376,19 @@ def run_setup():
     print(f"{BOLD}{CYAN}  🤖  openjob setup{RESET}")
     print(f"{BOLD}{CYAN}{'═' * 52}{RESET}")
     print(f"\n  Configure your job-search agent.\n")
+    print(f"  {c('Use ↑/↓ arrows + Enter to select.', DIM)}")
 
     env_updates = {}
-
-    # Step 1: LLM
     env_updates.update(setup_llm())
-
-    # Step 2: Candidate info
     env_updates.update(setup_candidate())
-
-    # Step 3: Discord (optional)
     env_updates.update(setup_discord())
 
-    # Step 4: Write .env
     write_env(env_updates)
-
-    # Step 5: Resume reminder
     setup_resume_reminder()
 
-    # Done
     print(f"\n{BOLD}{GREEN}{'═' * 52}{RESET}")
     print(f"{BOLD}{GREEN}  ✅  Setup complete!{RESET}")
-    print(f"{BOLD}{GREEN}{'═' * 52}{RESET}")
-    print()
+    print(f"{BOLD}{GREEN}{'═' * 52}{RESET}\n")
     info("Edit your resume HTML files (see above)")
     info(f"Run {c('openjob run', CYAN)} to start your first job search")
     info(f"Run {c('openjob retry <linkedin_url>', CYAN)} to test with one job")
