@@ -25,7 +25,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 from datetime import date as _date
 import os
-from config.settings import OUTPUT_DIR, SEEN_JOBS_FILE, TARGET_SDE_JOBS, TARGET_AI_JOBS, JOB_WORKERS, MAX_DAYS_OLD
+from config.settings import OUTPUT_DIR, SEEN_JOBS_FILE, TARGET_JOBS, JOB_WORKERS, MAX_DAYS_OLD
 from linkedin_scraper import get_new_jobs, _save_seen
 from resume_tailor import tailor_resume
 from pdf_generator import html_to_pdf
@@ -93,7 +93,7 @@ def run():
 
     logger.info("=" * 60)
     logger.info("openjob — Daily Job-Hunt Workflow")
-    logger.info(f"Target: {TARGET_SDE_JOBS} SDE + {TARGET_AI_JOBS} AI/ML jobs")
+    logger.info(f"Target: {TARGET_JOBS} jobs total")
     logger.info(f"Workers: {workers} | LLM: {llm_mode}")
     logger.info("=" * 60)
 
