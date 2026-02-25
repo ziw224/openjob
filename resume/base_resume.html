@@ -1,20 +1,19 @@
 <!DOCTYPE html>
 <!-- ================================================================
-  OPENJOB — AI / ML Engineer Resume Template
-  
-  Replace this file with YOUR resume content.
-  Keep the CSS structure intact — it's optimized for PDF export.
-  
+  OPENJOB — Resume Template
+
+  ✏️  Replace this file with YOUR resume content.
+  Keep the <style> block intact — it's tuned for one-page PDF export.
+
   Tips:
-  - Each <li> is one bullet point
-  - Use <strong> for keywords you want highlighted
-  - Keep it one page (the LLM will auto-compress if needed)
+  - Each <li> is one bullet. Use <strong> for keywords.
+  - Keep it one page (the AI will auto-compress/expand as needed).
+  - Run "openjob retry <url>" to preview the tailored output.
 ================================================================ -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Name - Resume (AI/ML)</title>
+  <title>Your Name - Resume</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     @page { size: letter; margin: 0.42in; }
@@ -26,37 +25,46 @@
       line-height: 1.28;
       width: 7.66in;
       margin: 0 auto;
-      padding: 0;
-      overflow: visible;
       padding-bottom: 0.12in;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     a { color: #1155CC; text-decoration: none; }
     a:hover { text-decoration: underline; }
+
+    /* ── Header ── */
     #header { text-align: center; margin-bottom: 5px; }
     #header h1 { font-size: 18pt; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
     #header .contact { font-size: 8.8pt; color: #333; margin-top: 3px; }
     #header .contact span { margin: 0 4px; color: #999; }
+
+    /* ── Sections ── */
     .section-title {
       font-size: 9.8pt; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.7px; border-bottom: 1.2px solid #1a1a1a;
       padding-bottom: 1px; margin: 7px 0 4px;
     }
+
+    /* ── Entries ── */
     .entry { margin-bottom: 4px; }
     .entry-header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
     .entry-header .left { flex: 1; min-width: 0; }
     .entry-header .right { font-size: 8.6pt; font-weight: 700; white-space: nowrap; }
-    .entry-org { font-weight: 700; font-size: 9.3pt; }
+    .entry-org  { font-weight: 700; font-size: 9.3pt; }
     .entry-role { font-weight: 700; font-style: italic; font-size: 8.9pt; }
+
+    /* ── Bullets ── */
     ul { list-style: none; padding-left: 0; margin-top: 2px; }
     ul li {
       padding-left: 11px; position: relative; margin-bottom: 1px;
       font-size: 8.7pt; line-height: 1.28; text-wrap: pretty;
     }
     ul li::before { content: "●"; position: absolute; left: 0; font-size: 7pt; top: 1px; }
+
+    /* ── Skills ── */
     #skills ul li { font-size: 8.7pt; }
     #skills .skill-label { font-weight: 700; }
+
     @media print {
       a { color: #1155CC !important; }
       .section-title { border-bottom-color: #000; }
@@ -66,30 +74,34 @@
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- ================================================================
+  HEADER — Replace with your info
+================================================================ -->
 <div id="header">
   <h1>Your Name</h1>
   <div class="contact">
-    Tel: (555) 000-0000
+    <a href="mailto:your@email.com">your@email.com</a>
     <span>|</span>
-    Email: <a href="mailto:your@email.com">your@email.com</a>
+    LinkedIn: <a href="https://linkedin.com/in/yourprofile">linkedin.com/in/yourprofile</a>
     <span>|</span>
-    Github: <a href="https://github.com/yourusername">github.com/yourusername</a>
+    GitHub: <a href="https://github.com/yourusername">github.com/yourusername</a>
     <span>|</span>
-    Portfolio: <a href="https://yourportfolio.dev"><strong>yourportfolio.dev</strong></a>
+    Portfolio: <a href="https://yourportfolio.dev">yourportfolio.dev</a>
   </div>
 </div>
 
-<!-- EDUCATION -->
+<!-- ================================================================
+  EDUCATION — Replace with your schools / degrees
+================================================================ -->
 <div class="section-title">Education</div>
 
 <div class="entry">
   <div class="entry-header">
     <div class="left">
       <div class="entry-org">University Name</div>
-      <div class="entry-role">Master of Science, Computer Science (AI/ML Focus)</div>
+      <div class="entry-role">Master of Science, Computer Science</div>
       <div style="font-size:8.3pt;color:#444;margin-top:1px;">
-        ● Selected Courses: Machine Learning, Deep Learning, NLP, Computer Vision, Distributed Systems
+        ● Relevant Courses: Course 1, Course 2, Course 3, Course 4
       </div>
     </div>
     <div class="right">City, State &nbsp;|&nbsp; Expected May 2026</div>
@@ -100,38 +112,38 @@
   <div class="entry-header">
     <div class="left">
       <div class="entry-org">University Name</div>
-      <div class="entry-role">Bachelor of Science, Computer Science (GPA: X.XX)</div>
+      <div class="entry-role">Bachelor of Science, Computer Science</div>
     </div>
-    <div class="right">City, State &nbsp;|&nbsp; 2024</div>
+    <div class="right">City, State &nbsp;|&nbsp; May 2024</div>
   </div>
 </div>
 
-<!-- EXPERIENCE -->
+<!-- ================================================================
+  EXPERIENCE — Replace with your work experience
+================================================================ -->
 <div class="section-title">Experience</div>
 
 <div class="entry">
   <div class="entry-header">
     <div class="left">
       <div class="entry-org">Company Name</div>
-      <div class="entry-role">AI Engineer / ML Engineer</div>
+      <div class="entry-role">Job Title</div>
     </div>
-    <div class="right">City, State &nbsp;|&nbsp; Jan 2024 - Present</div>
+    <div class="right">City, State &nbsp;|&nbsp; Jan 2024 – Present</div>
   </div>
   <ul>
     <li>
-      Built a production AI agent using <strong>LangChain</strong> and <strong>GPT-4o</strong> with a two-stage RAG pipeline (hybrid retrieval + cross-encoder re-ranking) achieving &lt;2s end-to-end latency.
+      Describe what you built, the technical approach, and the measurable outcome.
+      Use <strong>key technologies</strong> and <strong>concrete metrics</strong> where possible.
     </li>
     <li>
-      Engineered a context management layer for grounded prompt assembly from real-time signals, structured metadata, and summarized history, reducing hallucinations in multi-step agent workflows.
+      Describe a system or feature you owned end-to-end. Include the stack and scale.
     </li>
     <li>
-      Architected a distributed inference platform with <strong>99.9%</strong> availability, coordinating ingestion pipelines, model services, and real-time decision layers with automated failover.
+      Describe an optimization, improvement, or architectural decision you drove.
     </li>
     <li>
-      Built full-stack application using <strong>React</strong> and <strong>FastAPI</strong> with authenticated REST APIs and WebSockets to stream 100+ metrics in real time.
-    </li>
-    <li>
-      Designed scalable MySQL data infrastructure with sub-millisecond query performance and reliable data flow across clients, ML services, and third-party systems.
+      Describe collaboration, cross-functional impact, or a production incident you resolved.
     </li>
   </ul>
 </div>
@@ -139,42 +151,47 @@
 <div class="entry">
   <div class="entry-header">
     <div class="left">
-      <div class="entry-org">Research Lab, University</div>
-      <div class="entry-role">Research Assistant</div>
+      <div class="entry-org">Previous Company / Research Lab</div>
+      <div class="entry-role">Previous Role / Intern / Research Assistant</div>
     </div>
-    <div class="right">City, State &nbsp;|&nbsp; Sep 2023 - Present</div>
+    <div class="right">City, State &nbsp;|&nbsp; May 2023 – Dec 2023</div>
   </div>
   <ul>
     <li>
-      Researched evaluation of <strong>Video LLMs</strong>; ran controlled experiments to benchmark model performance on long-form video understanding tasks.
+      Describe your primary contribution — what problem you solved and how.
     </li>
     <li>
-      Implemented multi-image processing to reduce token usage via visual chain-of-thought infill generation.
+      Describe a technical challenge and how you overcame it.
     </li>
     <li>
-      Co-authored paper at top ML venue (NeurIPS / ICML / ICLR / ACL). <a href="#">paper</a>
+      Describe impact: shipped feature, improved metric, published result, etc.
     </li>
   </ul>
 </div>
 
-<!-- PROJECTS -->
+<!-- ================================================================
+  PROJECTS — Replace with your own projects
+================================================================ -->
 <div class="section-title">Projects</div>
 
 <div class="entry">
   <div class="entry-header">
     <div class="left">
-      <div class="entry-org">Project Name (Personal Project)</div>
+      <div class="entry-org">
+        Project Name &nbsp;
+        <a href="https://github.com/yourusername/your-repo" style="font-size:8.3pt;font-weight:400;">[GitHub]</a>
+      </div>
     </div>
   </div>
   <ul>
     <li>
-      Describe your most impressive AI/agent project with concrete technical details and outcomes.
+      One-line description of what the project does and who it's for.
     </li>
     <li>
-      Include stack (LangChain, OpenAI SDK, RAG, tool calling, etc.) and measurable impact.
+      Key technical decisions: architecture, stack (<strong>Framework</strong>, <strong>Model</strong>, <strong>DB</strong>), design patterns.
     </li>
     <li>
-      Mention any evaluation, guardrails, or deployment details.
+      Outcome: usage, performance gains, or what you learned.
     </li>
   </ul>
 </div>
@@ -182,28 +199,41 @@
 <div class="entry">
   <div class="entry-header">
     <div class="left">
-      <div class="entry-org">Another Project (Course / Hackathon)</div>
+      <div class="entry-org">Another Project (Course / Hackathon / Open Source)</div>
     </div>
   </div>
   <ul>
     <li>
-      Short description of the system architecture and key technical decisions.
+      Brief description of the system and your specific contribution.
     </li>
     <li>
-      Tools used and outcome / demo / paper / blog link.
+      Technologies used and the result.
     </li>
   </ul>
 </div>
 
-<!-- SKILLS -->
+<!-- ================================================================
+  SKILLS — Replace with your actual tech stack
+================================================================ -->
 <div class="section-title">Tech Stack</div>
 <div id="skills">
   <ul>
-    <li><span class="skill-label">Languages:</span> Python, JavaScript, TypeScript, SQL, C/C++</li>
-    <li><span class="skill-label">AI / Agents:</span> LangChain, OpenAI Agents SDK, Tool Calling, RAG, Embeddings, Hybrid Retrieval, Re-ranking, vLLM</li>
-    <li><span class="skill-label">Backend &amp; Data:</span> FastAPI, Node.js, REST APIs, WebSockets, MySQL, PostgreSQL, Redis</li>
-    <li><span class="skill-label">Frontend:</span> React, Next.js, Tailwind CSS, Redux</li>
-    <li><span class="skill-label">Infra/Tools:</span> Docker, Git, CI/CD, Linux, Firebase</li>
+    <li>
+      <span class="skill-label">Languages:</span>
+      Python, JavaScript/TypeScript, Go, Java, C++ (replace with yours)
+    </li>
+    <li>
+      <span class="skill-label">Frameworks / Libraries:</span>
+      React, Node.js, FastAPI, Spring Boot (replace with yours)
+    </li>
+    <li>
+      <span class="skill-label">AI / ML:</span>
+      PyTorch, HuggingFace, LangChain, OpenAI API (replace with yours)
+    </li>
+    <li>
+      <span class="skill-label">Infrastructure / Tools:</span>
+      AWS, Docker, Kubernetes, PostgreSQL, Redis, Git (replace with yours)
+    </li>
   </ul>
 </div>
 

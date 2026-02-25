@@ -351,12 +351,77 @@ def setup_candidate() -> dict:
     }
 
 
+def setup_search_config() -> None:
+    import json
+    print(f"\n{bold('── Job Search Config ─────────────────────────────────')}")
+    print(f"  {c('Tell openjob what jobs to look for on LinkedIn.', WHITE)}\n")
+
+    cfg_path = PROJECT_ROOT / "config" / "search_config.json"
+    existing = {}
+    if cfg_path.exists():
+        try:
+            existing = json.loads(cfg_path.read_text())
+        except Exception:
+            pass
+
+    existing_cats = existing.get("categories", {})
+    primary = next(iter(existing_cats.values()), {}) if existing_cats else {}
+
+    # Job title keywords
+    existing_kws = ", ".join(primary.get("keywords", ["Software Engineer"]))
+    kws_raw = prompt("Job title keywords (comma-separated)", existing_kws)
+    keywords = [k.strip() for k in kws_raw.split(",") if k.strip()]
+
+    # Locations
+    existing_locs = ", ".join(existing.get("locations", ["City, State", "Remote"]))
+    locs_raw = prompt("Locations (comma-separated)", existing_locs)
+    locations = [l.strip() for l in locs_raw.split(",") if l.strip()]
+
+    # Experience level
+    exp_labels = [
+        "Entry Level / New Grad",
+        "Associate",
+        "Mid-Senior",
+        "All levels",
+    ]
+    exp_values = [[2], [3], [4], [2, 3, 4]]
+    current_exp = primary.get("experience_levels", [2])
+    default_exp = exp_values.index(current_exp) if current_exp in exp_values else 0
+
+    print(f"\n  {c('Experience level:', WHITE)}")
+    # highlight current selection
+    items = [f"{l}  {c('← current', DIM) if exp_values[i] == current_exp else ''}" for i, l in enumerate(exp_labels)]
+    exp_idx = arrow_select(items)
+    exp_levels = exp_values[exp_idx]
+
+    cfg = {
+        "_comment": "Edit this file to customize your job search. No code changes needed. Run 'openjob setup' to reconfigure.",
+        "locations": locations,
+        "sort_by": existing.get("sort_by", "DD"),
+        "max_days_old": existing.get("max_days_old", 30),
+        "max_candidates": existing.get("max_candidates", 20),
+        "job_workers": existing.get("job_workers", 2),
+        "fallback": existing.get("fallback", {"stages": []}),
+        "categories": {
+            "primary": {
+                "keywords": keywords,
+                "boost_keywords": primary.get("boost_keywords", []),
+                "experience_levels": exp_levels,
+                "_experience_levels_comment": "1=Internship 2=Entry 3=Associate 4=Mid-Senior",
+                "target_count": primary.get("target_count", 10),
+            }
+        },
+        "max_candidates_preview": existing.get("max_candidates_preview", 20),
+    }
+    cfg_path.write_text(json.dumps(cfg, indent=2) + "\n")
+    ok(f"Saved search config  ({len(keywords)} keyword(s), locations: {', '.join(locations)})")
+
+
 def setup_resume_reminder():
-    print(f"\n{bold('── Resume Templates ──────────────────────────────────')}")
-    print(f"  Replace the placeholder content with your actual resume:\n")
-    info(f"AI / ML roles   → {c('resume/base_resume_ai.html', CYAN)}")
-    info(f"SDE / FS roles  → {c('resume/base_resume.html', CYAN)}")
-    print(f"\n  {c('Keep the CSS — just update the content sections.', DIM)}")
+    print(f"\n{bold('── Resume Template ───────────────────────────────────')}")
+    print(f"  Replace the placeholder with your actual resume:\n")
+    info(f"{c('resume/base_resume.html', CYAN)}")
+    print(f"\n  {c('Keep the CSS — just update the content inside <body>.', DIM)}")
 
 
 def setup_discord():
@@ -381,6 +446,7 @@ def run_setup():
     env_updates = {}
     env_updates.update(setup_llm())
     env_updates.update(setup_candidate())
+    setup_search_config()
     env_updates.update(setup_discord())
 
     write_env(env_updates)
