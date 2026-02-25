@@ -431,7 +431,7 @@ def setup_discord():
         return {}
     print(f"  {c('Create a webhook in Discord:', DIM)} Server Settings → Integrations → Webhooks")
     webhook = prompt("Discord webhook URL", "")
-    return {"DISCORD_WEBHOOK": webhook} if webhook else {}
+    return {"DISCORD_WEBHOOK_URL": webhook} if webhook else {}
 
 
 # ── Main entry point ──────────────────────────────────────────────────────────
