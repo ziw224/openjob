@@ -67,12 +67,12 @@ if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
 fi
 
 echo ""
-echo "✅ Done! Next steps:"
+echo "✅ Done!"
 echo ""
-echo "  1. openjob setup"
-echo "     → Choose your AI model & enter API key"
+echo "⚡ Activate in this terminal:"
+echo "   source ~/.zshrc"
 echo ""
-echo "  2. Edit resume/base_resume_ai.html with your resume"
-echo ""
-echo "  3. openjob run"
+echo "Then:"
+echo "  1. openjob setup    → choose AI model & enter API key"
+echo "  2. openjob run"
 echo ""
