@@ -194,6 +194,7 @@ def _run_claude(prompt: str, label: str) -> str | None:
                 _codex_env = os.environ.copy()
                 _nvm_node_dir = str(Path(CODEX_BIN).parent)
                 _codex_env["PATH"] = _nvm_node_dir + os.pathsep + _codex_env.get("PATH", "")
+                _codex_cwd = tempfile.mkdtemp()   # isolated dir so codex can't pollute repo root
                 cx = subprocess.run(
                     [
                         CODEX_BIN, "exec",
@@ -208,6 +209,7 @@ def _run_claude(prompt: str, label: str) -> str | None:
                     text=True,
                     timeout=300,
                     env=_codex_env,
+                    cwd=_codex_cwd,
                 )
                 if cx.returncode != 0:
                     logger.error(f"  Codex call failed for {label} (code {cx.returncode}): {(cx.stderr or cx.stdout or '')[:300]}")

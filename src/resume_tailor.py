@@ -156,13 +156,15 @@ def _call_llm(prompt: str) -> str | None:
             _codex_env = os.environ.copy()
             _nvm_node_dir = str(Path(CODEX_BIN).parent)
             _codex_env["PATH"] = _nvm_node_dir + os.pathsep + _codex_env.get("PATH", "")
+            _codex_cwd = tempfile.mkdtemp()   # isolated dir so codex can't pollute repo root
             result = subprocess.run(
                 [CODEX_BIN, "exec",
                  "--model", CODEX_MODEL,
                  "--sandbox", "read-only",
                  "--skip-git-repo-check",
                  "--output-last-message", out_file, "-"],
-                input=prompt, capture_output=True, text=True, timeout=480, env=_codex_env,
+                input=prompt, capture_output=True, text=True, timeout=480,
+                env=_codex_env, cwd=_codex_cwd,
             )
             if result.returncode != 0:
                 logger.error(f"  Codex call failed ({result.returncode}): {(result.stderr or result.stdout or '')[:300]}")
