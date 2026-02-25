@@ -3,7 +3,22 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.venv"
-INSTALL_DIR="$HOME/.local/bin"
+
+# Pick the best install dir — prefer one already in PATH
+_pick_install_dir() {
+    # Check common dirs that are usually already in PATH
+    for candidate in /usr/local/bin /opt/homebrew/bin "$HOME/.local/bin"; do
+        if echo "$PATH" | tr ':' '\n' | grep -qxF "$candidate"; then
+            if [ -w "$candidate" ] 2>/dev/null || mkdir -p "$candidate" 2>/dev/null && [ -w "$candidate" ]; then
+                echo "$candidate"
+                return
+            fi
+        fi
+    done
+    # Fallback: ~/.local/bin (may need PATH update)
+    echo "$HOME/.local/bin"
+}
+INSTALL_DIR="$(_pick_install_dir)"
 
 echo "🔧 Installing openjob..."
 
@@ -40,9 +55,9 @@ cd "$SCRIPT_DIR"
 SCRIPT
 chmod +x "$INSTALL_DIR/openjob"
 
-# Auto-add to PATH if not already present
-PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
-if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
+# Add to PATH only if install dir isn't already in PATH
+if ! echo "$PATH" | tr ':' '\n' | grep -qxF "$INSTALL_DIR"; then
+    PATH_LINE="export PATH=\"$INSTALL_DIR:\$PATH\""
     # Detect shell config file
     if [ -f "$HOME/.zshrc" ]; then
         SHELL_RC="$HOME/.zshrc"
@@ -53,26 +68,19 @@ if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
     else
         SHELL_RC="$HOME/.zshrc"
     fi
-
-    # Only append if not already in the file
-    if ! grep -qF "$PATH_LINE" "$SHELL_RC" 2>/dev/null; then
+    if ! grep -qF "$INSTALL_DIR" "$SHELL_RC" 2>/dev/null; then
         echo "" >> "$SHELL_RC"
         echo "# openjob" >> "$SHELL_RC"
         echo "$PATH_LINE" >> "$SHELL_RC"
-        echo "✅ Added ~/.local/bin to PATH in $SHELL_RC"
     fi
-
-    # Apply to current session
     export PATH="$INSTALL_DIR:$PATH"
+    echo ""
+    echo "⚡ Run 'source $SHELL_RC' to make openjob available in future terminals."
 fi
 
 echo ""
-echo "✅ Done!"
+echo "✅ Done! Installed to $INSTALL_DIR"
 echo ""
-echo "⚡ Activate in this terminal:"
-echo "   source ~/.zshrc"
-echo ""
-echo "Then:"
 echo "  1. openjob setup    → choose AI model & enter API key"
 echo "  2. openjob run"
 echo ""
