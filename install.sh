@@ -40,12 +40,30 @@ cd "$SCRIPT_DIR"
 SCRIPT
 chmod +x "$INSTALL_DIR/openjob"
 
-# Check PATH
+# Auto-add to PATH if not already present
+PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
 if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
-    echo ""
-    echo "⚠️  Add to your shell config (~/.zshrc or ~/.bashrc):"
-    echo "   export PATH=\"\$HOME/.local/bin:\$PATH\""
-    echo "   Then run: source ~/.zshrc"
+    # Detect shell config file
+    if [ -f "$HOME/.zshrc" ]; then
+        SHELL_RC="$HOME/.zshrc"
+    elif [ -f "$HOME/.bashrc" ]; then
+        SHELL_RC="$HOME/.bashrc"
+    elif [ -f "$HOME/.bash_profile" ]; then
+        SHELL_RC="$HOME/.bash_profile"
+    else
+        SHELL_RC="$HOME/.zshrc"
+    fi
+
+    # Only append if not already in the file
+    if ! grep -qF "$PATH_LINE" "$SHELL_RC" 2>/dev/null; then
+        echo "" >> "$SHELL_RC"
+        echo "# openjob" >> "$SHELL_RC"
+        echo "$PATH_LINE" >> "$SHELL_RC"
+        echo "✅ Added ~/.local/bin to PATH in $SHELL_RC"
+    fi
+
+    # Apply to current session
+    export PATH="$INSTALL_DIR:$PATH"
 fi
 
 echo ""
