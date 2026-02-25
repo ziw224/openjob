@@ -116,8 +116,56 @@ def _run_claude(prompt: str, label: str) -> str | None:
             resp = client.chat.completions.create(
                 model=os.getenv("OPENAI_MODEL", "gpt-4o"),
                 messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500, timeout=60,
+            )
+            return resp.choices[0].message.content.strip()
+
+        elif LLM_MODE == "anthropic":
+            import anthropic
+            client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+            msg = client.messages.create(
+                model=os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
                 max_tokens=1500,
-                timeout=60,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return msg.content[0].text.strip()
+
+        elif LLM_MODE == "gemini":
+            import openai
+            client = openai.OpenAI(
+                api_key=os.getenv("GEMINI_API_KEY"),
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            )
+            resp = client.chat.completions.create(
+                model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500, timeout=60,
+            )
+            return resp.choices[0].message.content.strip()
+
+        elif LLM_MODE == "groq":
+            import openai
+            client = openai.OpenAI(
+                api_key=os.getenv("GROQ_API_KEY"),
+                base_url="https://api.groq.com/openai/v1",
+            )
+            resp = client.chat.completions.create(
+                model=os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile"),
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500, timeout=60,
+            )
+            return resp.choices[0].message.content.strip()
+
+        elif LLM_MODE == "ollama":
+            import openai
+            client = openai.OpenAI(
+                api_key="ollama",
+                base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434") + "/v1",
+            )
+            resp = client.chat.completions.create(
+                model=os.getenv("OLLAMA_MODEL", "llama3.1"),
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500, timeout=120,
             )
             return resp.choices[0].message.content.strip()
 

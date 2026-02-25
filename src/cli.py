@@ -43,6 +43,11 @@ logging.basicConfig(
 )
 
 
+def cmd_setup():
+    from setup import run_setup
+    run_setup()
+
+
 def cmd_run():
     import main
     main.run()
@@ -193,6 +198,7 @@ def cmd_retry_day(day: str | None = None):
 
 
 COMMANDS = {
+    "setup":     cmd_setup,
     "run":       cmd_run,
     "retry":     cmd_retry,
     "retry-day": cmd_retry_day,
