@@ -1,7 +1,15 @@
 {
   "_comment": "Edit this file to customize your job search. No code changes needed. Run 'openjob setup' to configure interactively.",
   "locations": [
-    "City, State",
+    "San Jose, CA",
+    "Palo Alto, CA",
+    "Mountain View, CA",
+    "Sunnyvale, CA",
+    "Santa Clara, CA",
+    "Cupertino, CA",
+    "Menlo Park, CA",
+    "Redwood City, CA",
+    "San Francisco, CA",
     "Remote"
   ],
   "sort_by": "DD",
